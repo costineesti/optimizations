@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        ".fantomasignore": "ignore",
+        "queue": "cpp",
+        "xstring": "cpp"
+    }
+}

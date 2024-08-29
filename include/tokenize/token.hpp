@@ -1,4 +1,4 @@
-#indef TOKEN_HPP
+#ifndef TOKEN_HPP
 #define TOKEN_HPP
 
 #include <iostream>
@@ -9,30 +9,33 @@
 #include <map>
 #include <functional>
 #include <math.h>
-#include <stack>  // For stack
+#include <stack>  // For operations
 #include <queue>  // For queue
+#include <array> //  For tokens.
 
 class Token {
 public:
 
-	enum class Type {
-		VARIABLE,
-		NUMBER,
-		LEFTPARAN,
-		RIGHTPARAN,
-		OPERATOR,
-		FUNCTION
+	/* Constructor */
+	Token();
+	/* Desctructor */
+	~Token();
+
+	enum TokenType { NUMBER, VARIABLE, OPERATOR, FUNCTION, LEFT_PARAN, RIGHT_PARAN };
+	struct TokenData {
+		TokenType type;
+		std::string value;
+		TokenData(TokenType t, const std::string& expr) : type(t), value(expr) {}
 	};
 
-	Token();
-	~Token();
-	std::string value;
+	std::string tokenTypeToString(TokenData tkData);
+	std::vector<Token::TokenData> tokenize(const std::string &expr);
+	std::queue<Token::TokenData> ShuntingYard(const std::vector<Token::TokenData> &tokens);
+	double evaluateRPN(std::queue<Token::TokenData> &outputQueue, double xValue, double yValue);
 
-	void processTokens(const std::vector<Token>& tokens);
 private:
-	std::stack<Token> operators; // Stack for operations
-	std::queue<Token> output; // Queue for the output
-	std::vector<Token> tokenArray; // Array of tokens.
+	int getPrecedence(const std::string &op);
+	bool isLeftAssociative(const std::string &op);
 };
 
 #endif

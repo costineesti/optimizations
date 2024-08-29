@@ -1,21 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <cctype>
-#include <cmath>
-#include <map>
-#include <functional>
-#include <math.h>
-#include <stack>  // For operations
-#include <queue>  // For queue
-#include <array> //  For tokens.
-
-enum TokenType { NUMBER, VARIABLE, OPERATOR, FUNCTION, LEFT_PARAN, RIGHT_PARAN };
-
-struct Token {
-    TokenType type;
-    std::string value;
-};
+#include "../../include/tokenize/token.hpp"
 
 // Define map for basic operators
 std::map<std::string, std::function<double(double, double)>> operators = {
@@ -34,9 +17,12 @@ std::map<std::string, std::function<double(double)>> functions = {
     {"exp", [](double a) { return std::exp(a); }},
 };
 
+Token::Token(){}
+Token::~Token(){}
+
 // Function to convert TokenType enum to string for printing
-std::string tokenTypeToString(TokenType type) {
-    switch (type) {
+std::string Token::tokenTypeToString(Token::TokenData tkData) {
+    switch (tkData.type) {
     case NUMBER: return "NUMBER";
     case VARIABLE: return "VARIABLE";
     case OPERATOR: return "OPERATOR";
@@ -48,8 +34,8 @@ std::string tokenTypeToString(TokenType type) {
 }
 
 // Function to tokenize the input string
-std::vector<Token> tokenize(const std::string& expr) {
-    std::vector<Token> tokens;
+std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
+    std::vector<Token::TokenData> tokens;
     std::string temp;
 
     for (size_t i = 0; i < expr.size(); i++) {
@@ -102,7 +88,7 @@ std::vector<Token> tokenize(const std::string& expr) {
 }
 
 // Function to get precedence of operators
-int getPrecedence(const std::string& op) {
+int Token::getPrecedence(const std::string& op) {
     if (op == "+" || op == "-") return 1;
     if (op == "*" || op == "/") return 2;
     if (op == "^") return 3;
@@ -110,15 +96,15 @@ int getPrecedence(const std::string& op) {
 }
 
 // Function to get associativity of operators
-bool isLeftAssociative(const std::string& op) {
+bool Token::isLeftAssociative(const std::string& op) {
     if (op == "^") return false;
     return true;  // All others are left associative
 }
 
 // implement Shunting Yard!
-std::queue<Token> ShuntingYard(const std::vector<Token> &tokens){
-    std::queue<Token> outputQueue;
-    std::stack<Token> operatorStack;
+std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenData> &tokens){
+    std::queue<Token::TokenData> outputQueue;
+    std::stack<Token::TokenData> operatorStack;
 /*
   While there are tokens to be read:
         Read a token
@@ -135,19 +121,19 @@ std::queue<Token> ShuntingYard(const std::vector<Token> &tokens){
  While there are operators on the stack, pop them to the queue
 */
     for (const auto& token : tokens){
-        if(token.type == NUMBER || token.type == VARIABLE){
+        if(token.type == Token::NUMBER || token.type == Token::VARIABLE){
             outputQueue.push(token); // PUSH NUMBERS AND VARIABLES TO queue
         }
-        else if(token.type == FUNCTION){
+        else if(token.type == Token::FUNCTION){
             operatorStack.push(token); // Push functions onto the stack.
         }
-        else if(token.type == OPERATOR){
+        else if(token.type == Token::OPERATOR){
             // precedence theory from https://en.wikipedia.org/wiki/Operators_in_C_and_C%2B%2B
             while (!operatorStack.empty() &&
-                    operatorStack.top().type == OPERATOR &&
+                    operatorStack.top().type == Token::OPERATOR &&
                     (getPrecedence(operatorStack.top().value) > getPrecedence(token.value) ||
                     (getPrecedence(operatorStack.top().value) == getPrecedence(token.value) && isLeftAssociative(token.value))) &&
-                    operatorStack.top().type != LEFT_PARAN) {
+                    operatorStack.top().type != Token::LEFT_PARAN) {
 
                         outputQueue.push(operatorStack.top());
                         operatorStack.pop();
@@ -155,18 +141,18 @@ std::queue<Token> ShuntingYard(const std::vector<Token> &tokens){
                     }
                 operatorStack.push(token);
         }
-        else if(token.type == LEFT_PARAN){
+        else if(token.type == Token::LEFT_PARAN){
             operatorStack.push(token);
         }
-        else if(token.type == RIGHT_PARAN){
-            while (!operatorStack.empty() && operatorStack.top().type != LEFT_PARAN){
+        else if(token.type == Token::RIGHT_PARAN){
+            while (!operatorStack.empty() && operatorStack.top().type != Token::LEFT_PARAN){
                 outputQueue.push(operatorStack.top());
                 operatorStack.pop();
             }
-            if (!operatorStack.empty() && operatorStack.top().type == LEFT_PARAN){
+            if (!operatorStack.empty() && operatorStack.top().type == Token::LEFT_PARAN){
                 operatorStack.pop(); // pop the left paran and discard it.
             }
-            if (!operatorStack.empty() && operatorStack.top().type == FUNCTION){
+            if (!operatorStack.empty() && operatorStack.top().type == Token::FUNCTION){
                 outputQueue.push(operatorStack.top()); // push the function to the output queue.
                 operatorStack.pop();
             }
@@ -182,29 +168,29 @@ std::queue<Token> ShuntingYard(const std::vector<Token> &tokens){
     return outputQueue;
 }
 
-double evaluateRPN(std::queue<Token> &outputQueue, double xValue, double yValue){
+double Token::evaluateRPN(std::queue<Token::TokenData> &outputQueue, double xValue, double yValue){
     // evaluate the RPN with a given value for X
     std::stack<double> evalStack;
 
     while(!outputQueue.empty()){
-        Token token = outputQueue.front(); // LIFO
+        Token::TokenData token = outputQueue.front(); // LIFO
         outputQueue.pop(); // remove the last element
 
-        if (token.type == NUMBER) {
+        if (token.type == Token::NUMBER) {
             evalStack.push(std::stod(token.value));
         }
-        else if (token.type == VARIABLE) {
+        else if (token.type == Token::VARIABLE) {
             if (token.value == "x"){
                 evalStack.push(xValue);
             }
             else {evalStack.push(yValue);}
         }
-        else if (token.type == OPERATOR) {
+        else if (token.type == Token::OPERATOR) {
             double b = evalStack.top(); evalStack.pop(); // take b
             double a = evalStack.top(); evalStack.pop(); // take a
             evalStack.push(operators[token.value](a,b));
         }
-        else if (token.type == FUNCTION) {
+        else if (token.type == Token::FUNCTION) {
             double a = evalStack.top(); evalStack.pop();
             evalStack.push(functions[token.value](a));
         }
@@ -212,48 +198,3 @@ double evaluateRPN(std::queue<Token> &outputQueue, double xValue, double yValue)
 
     return evalStack.top();
 }
-
-
-int main() {
-    std::string expression;
-    std::cout << "Enter a mathematical expression in terms of x and y: ";
-    std::getline(std::cin, expression);
-
-    std::vector<Token> tokens = tokenize(expression);
-
-    // Print the tokens
-    for (const auto& token : tokens) {
-        std::cout << "Token Type: " << tokenTypeToString(token.type) << ", Value: " << token.value << std::endl;
-    }
-
-    std::queue<Token> outputQueue = ShuntingYard(tokens);
-
-    /*
-    // Print the outputQueue => We can expect it in Reverse Polish Notation (RPN)
-    while(!outputQueue.empty()){
-        const Token& token = outputQueue.front();
-        std::cout << token.value << " ";
-        outputQueue.pop(); 
-    }
-    std::cout << std::endl;
-    */
-
-   double xValue, yValue;
-   std::cout << "Enter the value of x: ";
-   std::cin >> xValue;
-
-   std::cout << "Enter the value of y: ";
-   std::cin >> yValue;
-
-   double result = evaluateRPN(outputQueue, xValue, yValue);
-
-   std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
-
-    return 0;
-}
-
-/*
-- MAKE THE FUNCTIONS TAKE 2 VARIABLES!
-- now i need to implement the optimization algorithms in different classes
-- i will make them take a queue as input and a value for X.
-*/
