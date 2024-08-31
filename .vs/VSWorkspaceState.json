@@ -2,10 +2,12 @@
   "ExpandedNodes": [
     "",
     "\\include",
+    "\\include\\syntax_tree",
     "\\include\\tokenize",
     "\\source",
+    "\\source\\syntax_tree",
     "\\source\\tokenize"
   ],
-  "SelectedNode": "\\source\\main.cpp",
+  "SelectedNode": "\\source\\syntax_tree\\ast.cpp",
   "PreviewInSolutionExplorer": false
 }

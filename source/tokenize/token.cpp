@@ -1,4 +1,7 @@
 #include "../../include/tokenize/token.hpp"
+#ifndef GOLDEN_NUMBER
+#define GOLDEN_NUMBER 0.618033988749895
+#endif
 
 // Define map for basic operators
 std::map<std::string, std::function<double(double, double)>> operators = {
@@ -168,7 +171,7 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
     return outputQueue;
 }
 
-double Token::evaluateRPN(std::queue<Token::TokenData> &outputQueue, double xValue, double yValue){
+double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, double xValue, double yValue){
     // evaluate the RPN with a given value for X
     std::stack<double> evalStack;
 
@@ -197,4 +200,67 @@ double Token::evaluateRPN(std::queue<Token::TokenData> &outputQueue, double xVal
     }
 
     return evalStack.top();
+}
+
+/*
+Golden section algorithm.
+inputs:
+    - outputQueue = the function in RPN (postorder)
+    - a = lower margin
+    - b = upper margin
+    - e = tolerance
+output:
+    - function minima.
+*/
+double Token::golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+    double d = b - a;
+    double x1, x2, f_x1, f_x2;
+    while(b-a > e){
+        d = GOLDEN_NUMBER * d;
+        x1 = b - d;
+        x2 = a + d;
+
+        f_x1 = evaluateRPN(outputQueue, x1, 0);
+        f_x2 = evaluateRPN(outputQueue, x2, 0);
+
+        if (f_x1 <= f_x2){
+            b = x2;
+        }
+        else{
+            a = x1;
+        }
+    }
+    double point = (a+b)/2;
+    return evaluateRPN(outputQueue, point, 0);
+}
+
+/*
+Fibonacci Series algorithm.
+inputs:
+    - outputQueue = the function in RPN (postorder)
+    - a = lower margin
+    - b = upper margin
+    - e = tolerance
+output:
+    - function minima.
+*/
+double Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+    double f1 = 2, f2 = 3, f3 = 5;
+    double d, x1, x2;
+    while(b-a > e){
+        d = b-a;
+        x1 = b-d*f1/f2;
+        x2 = a+d*f1/f2;
+        if ( evaluateRPN(outputQueue, x1, 0) <= evaluateRPN(outputQueue, x2, 0) ){
+            b = x2;
+        }
+        else{
+            a = x1;
+        }
+        f1 = f2;
+        f2 = f3;
+        f3 = f1+f2;
+    }
+    double point = (a+b)/2;
+    return evaluateRPN(outputQueue, point, 0);
 }
