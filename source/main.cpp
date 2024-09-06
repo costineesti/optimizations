@@ -19,7 +19,7 @@ int main() {
     AST ast;
     Node* root = ast.buildAST(outputQueue);
     // Output the AST in post order ( which should be the same as RPN )
-    std::cout << "The postorder from the syntax tree: " << ast.postorder() << std::endl;
+    std::cout << "The postorder from the syntax tree: " << ast.postorder(root) << std::endl;
 
     
     // Print the outputQueue => We can expect it in Reverse Polish Notation (RPN)
@@ -32,6 +32,13 @@ int main() {
     }
     std::cout << std::endl;
     
+    Differentiator diff;
+    Node* differential = diff.differentiate(root, "x");
+    Node* simplified_differential = diff.simplify(differential);
+    std::cout << "The differential w.r.t x: " << diff.toInfix(simplified_differential) << std::endl;
+    std::cout << "Differential postorder: " << diff.postorder(differential) << std::endl;
+    /*
+
     std::cout << "Golden section minima: ";
     std::cout << tokenizer.golden_section(outputQueue, -3, 0, 0.01);
     std::cout << std::endl;
@@ -39,16 +46,18 @@ int main() {
     std::cout << "Fibonacci series minima: ";
     std::cout << tokenizer.fibonacci_series(outputQueue, -3, 0, 0.01);
     std::cout << std::endl;
-//    double xValue, yValue;
-//    std::cout << "Enter the value of x: ";
-//    std::cin >> xValue;
 
-//    std::cout << "Enter the value of y: ";
-//    std::cin >> yValue;
+    */
+   double xValue, yValue;
+   std::cout << "Enter the value of x: ";
+   std::cin >> xValue;
 
-//    double result = tokenizer.evaluateRPN(outputQueue, xValue, yValue);
+   std::cout << "Enter the value of y: ";
+   std::cin >> yValue;
 
-//    std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
+   double result = tokenizer.evaluateRPN(outputQueue, xValue, yValue);
+
+   std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
 
     return 0;
 }

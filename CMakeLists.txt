@@ -4,7 +4,6 @@ project(optimizations)
 # Include additional directories
 set(includeDirs
     ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/matplot
     ${CMAKE_CURRENT_SOURCE_DIR}/include/quadratic
     ${CMAKE_CURRENT_SOURCE_DIR}/include/tokenize
     ${CMAKE_CURRENT_SOURCE_DIR}/include/syntax_tree

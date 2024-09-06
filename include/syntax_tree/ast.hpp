@@ -14,6 +14,8 @@ public:
 	Node* right;
 
 	Node(Token::TokenData value) : data(value), left(nullptr), right(nullptr) {}
+	// New constructor to handle left and right children
+    Node(Token::TokenData value, Node* leftNode, Node* rightNode) : data(value), left(leftNode), right(rightNode) {}
 };
 
 // Binary Tree
@@ -40,7 +42,7 @@ class AST : public BinaryTree {
 public:
 	AST();
 	Node* buildAST(const std::queue<Token::TokenData>& rpnQueue);
-	std::string postorder();
+	std::string postorder(Node* root);
 	Node* getRoot() const {
 		return root;
 	}

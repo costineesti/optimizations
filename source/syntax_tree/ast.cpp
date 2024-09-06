@@ -129,7 +129,7 @@ void BinaryTree::levelOrder() {
 AST::AST() {}
 
 // Function to perform postorder traversal of the tree
-std::string AST::postorder() {
+std::string AST::postorder(Node* root) {
 	return postorderRecursive(root);
 }
 // Function to build the Abstract Syntax Tree
@@ -146,7 +146,7 @@ Node* AST::buildAST(const std::queue<Token::TokenData>& rpnQueue) {
 		if (token.type == Token::NUMBER || token.type == Token::VARIABLE) {
 			stack.push(newNode); // Push operands directly onto the stack
 		}
-		else if (token.type == Token::OPERATOR || token.type == Token::FUNCTION) {
+		else if (token.type == Token::OPERATOR) {
 			Node* right = stack.top(); // Pop nodes for the operator's operands from the stack
 			stack.pop();
 
@@ -163,6 +163,18 @@ Node* AST::buildAST(const std::queue<Token::TokenData>& rpnQueue) {
 			// Push the new subtree back onto the stack
 			stack.push(newNode);
 		}
+		else if (token.type == Token::FUNCTION) {
+			// Pop only one operand for unary functions
+			Node* operand = stack.top();
+			stack.pop();
+
+			// Create a new node with the function and set the operand as its child
+			newNode->left = operand;
+
+			// Push the new subtree back onto the stack
+			stack.push(newNode);
+		}
+
 	}
 
 	// The remaining node on the stack is the root of the AST
