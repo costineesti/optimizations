@@ -121,7 +121,9 @@ Node* Differentiator::simplify(Node* root) {
 
         // Create a Token instance to evaluate the RPN expression
         Token tokenizer;
-        double result = tokenizer.evaluateRPN(rpnQueue, 0, 0);
+        std::map<std::string, double> nule;
+        nule["x"] = 0; nule["y"] = 0;
+        double result = tokenizer.evaluateRPN(rpnQueue, nule);
 
         // Replace the current node with a simplified numeric result
         return new Node(Token::TokenData(Token::NUMBER, std::to_string(result)));
@@ -179,4 +181,26 @@ std::string Differentiator::toInfix(Node* root) {
 
     // If it's a number or a variable, just return its value
     return root->data.value;
+}
+
+/** @brief Computin the jacobian of the mathematical expression. 
+ * Using Eigen because there are no matrices in C++, only an array of an array.
+ */
+Eigen::MatrixXd Differentiator::computeJacobian(Node* function, const std::map<std::string, double>& variablesMap){
+    const int numVariables = variablesMap.size();
+    Eigen::MatrixXd jacobian(1, numVariables);
+
+    // Diferrentiate the function w.r.t every variable.
+    int col = 0;
+    for (const auto& [var, value] : variablesMap){
+        Node* partialDerivative = this->differentiate(function, var);
+        Node* simplifiedPartial = this->simplify(partialDerivative);
+    }   
+
+    return jacobian;
+}
+
+Eigen::MatrixXd Differentiator::computeHessian(Node* function, const std::map<std::string, double>& variablesMap){
+    Eigen::MatrixXd hessian;
+    return hessian;
 }

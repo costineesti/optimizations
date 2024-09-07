@@ -330,6 +330,7 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
   <ItemGroup>
     <ClCompile Include="C:\github\optimizations\source\main.cpp" />
     <ClCompile Include="C:\github\optimizations\source\syntax_tree\ast.cpp" />
+    <ClCompile Include="C:\github\optimizations\source\syntax_tree\differentiator.cpp" />
     <ClCompile Include="C:\github\optimizations\source\tokenize\token.cpp" />
   </ItemGroup>
   <ItemGroup>

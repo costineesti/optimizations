@@ -1,16 +1,21 @@
 #ifndef DIFFERENTIATOR_HPP
 #define DIFFERENTATOR_HPP
 #include "./ast.hpp"
+#include "../Eigen/Dense"
 
 class Differentiator : public AST{
     public:
         Differentiator();
-        // Function that returns the derivative inside a tree.
+        /** @brief Function that returns the derivative of a function inside a tree. */
         Node* differentiate(Node* root, const std::string& var);
-        // Function that converts the AST to the infix notation ( as i give it )
-         std::string toInfix(Node* root);
-         // Function that simplifies an AST that has multiple 0 in it (such as multiply etc)
-         Node* simplify(Node *root);
+        /** @brief Function that converts the AST to the infix notation */
+        std::string toInfix(Node* root);
+        /** @brief Function that simplifies an AST */
+        Node* simplify(Node *root);
+        /** @brief compute the jacobian using Eigen */
+        Eigen::MatrixXd computeJacobian(Node* function, const std::map<std::string, double>& variablesMap);
+        /** @brief compute the hessian using Eigen */
+        Eigen::MatrixXd computeHessian(Node* function, const std::map<std::string, double>& variablesMap);
 };
 
 #endif

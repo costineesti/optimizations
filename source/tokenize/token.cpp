@@ -171,27 +171,24 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
     return outputQueue;
 }
 
-double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, double xValue, double yValue){
-    // evaluate the RPN with a given value for X
+double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, const std::map<std::string, double>& variableValues) {
     std::stack<double> evalStack;
 
-    while(!outputQueue.empty()){
-        Token::TokenData token = outputQueue.front(); // LIFO
-        outputQueue.pop(); // remove the last element
+    while (!outputQueue.empty()) {
+        Token::TokenData token = outputQueue.front();
+        outputQueue.pop();
 
         if (token.type == Token::NUMBER) {
             evalStack.push(std::stod(token.value));
         }
         else if (token.type == Token::VARIABLE) {
-            if (token.value == "x"){
-                evalStack.push(xValue);
-            }
-            else {evalStack.push(yValue);}
+            // Use the map to get the variable's value
+            evalStack.push(variableValues.at(token.value));
         }
         else if (token.type == Token::OPERATOR) {
-            double b = evalStack.top(); evalStack.pop(); // take b
-            double a = evalStack.top(); evalStack.pop(); // take a
-            evalStack.push(operators[token.value](a,b));
+            double b = evalStack.top(); evalStack.pop();
+            double a = evalStack.top(); evalStack.pop();
+            evalStack.push(operators[token.value](a, b));
         }
         else if (token.type == Token::FUNCTION) {
             double a = evalStack.top(); evalStack.pop();
@@ -202,8 +199,9 @@ double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, double xValu
     return evalStack.top();
 }
 
-/*
-Golden section algorithm.
+
+/** 
+@brief: Golden section algorithm.
 inputs:
     - outputQueue = the function in RPN (postorder)
     - a = lower margin
@@ -219,9 +217,13 @@ double Token::golden_section(std::queue<Token::TokenData> outputQueue, double a,
         d = GOLDEN_NUMBER * d;
         x1 = b - d;
         x2 = a + d;
+        std::map<std::string, double> x1_map;
+        std::map<std::string, double> x2_map;
+        x1_map["x"] = x1;
+        x2_map["x"] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
 
-        f_x1 = evaluateRPN(outputQueue, x1, 0);
-        f_x2 = evaluateRPN(outputQueue, x2, 0);
+        f_x1 = evaluateRPN(outputQueue, x1_map);
+        f_x2 = evaluateRPN(outputQueue, x2_map);
 
         if (f_x1 <= f_x2){
             b = x2;
@@ -231,11 +233,13 @@ double Token::golden_section(std::queue<Token::TokenData> outputQueue, double a,
         }
     }
     double point = (a+b)/2;
-    return evaluateRPN(outputQueue, point, 0);
+    std::map<std::string, double> final_point;
+    final_point["x"] = point;
+    return evaluateRPN(outputQueue, final_point);
 }
 
-/*
-Fibonacci Series algorithm.
+/**
+@brief: Fibonacci Series algorithm.
 inputs:
     - outputQueue = the function in RPN (postorder)
     - a = lower margin
@@ -246,12 +250,20 @@ output:
 */
 double Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
     double f1 = 2, f2 = 3, f3 = 5;
-    double d, x1, x2;
+    double d, x1, x2, f_x1, f_x2;
     while(b-a > e){
         d = b-a;
         x1 = b-d*f1/f2;
         x2 = a+d*f1/f2;
-        if ( evaluateRPN(outputQueue, x1, 0) <= evaluateRPN(outputQueue, x2, 0) ){
+        std::map<std::string, double> x1_map;
+        std::map<std::string, double> x2_map;
+        x1_map["x"] = x1;
+        x2_map["x"] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
+
+        f_x1 = evaluateRPN(outputQueue, x1_map);
+        f_x2 = evaluateRPN(outputQueue, x2_map);
+
+        if ( f_x1 <= f_x2 ){
             b = x2;
         }
         else{
@@ -262,5 +274,7 @@ double Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double 
         f3 = f1+f2;
     }
     double point = (a+b)/2;
-    return evaluateRPN(outputQueue, point, 0);
+    std::map<std::string, double> final_point;
+    final_point["x"] = point;
+    return evaluateRPN(outputQueue, final_point);
 }

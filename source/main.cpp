@@ -35,7 +35,8 @@ int main() {
     Differentiator diff;
     Node* differential = diff.differentiate(root, "x");
     Node* simplified_differential = diff.simplify(differential);
-    std::cout << "The differential w.r.t x: " << diff.toInfix(simplified_differential) << std::endl;
+    const std::string diff_expression = diff.toInfix(simplified_differential);
+    std::cout << "The differential w.r.t x: " << diff_expression << std::endl;
     std::cout << "Differential postorder: " << diff.postorder(differential) << std::endl;
     /*
 
@@ -55,11 +56,22 @@ int main() {
    std::cout << "Enter the value of y: ";
    std::cin >> yValue;
 
-   double result = tokenizer.evaluateRPN(outputQueue, xValue, yValue);
+   std::map<std::string, double> x0;
+   x0["x"] = xValue; x0["y"] = yValue;
 
+   double result = tokenizer.evaluateRPN(outputQueue, x0);
+   
    std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
 
-    return 0;
+   // Get value for differential
+   auto tokens_differential = tokenizer.tokenize(diff_expression);
+   auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
+   double result_diff = tokenizer.evaluateRPN(outputQueue_differential, x0);
+
+   std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
+   std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << std::endl;
+
+   return 0;
 }
 
 /*
