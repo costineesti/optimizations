@@ -135,11 +135,20 @@ Node* Differentiator::simplify(Node* root) {
             (root->right && root->right->data.value == "0")) {
             return new Node(Token::TokenData(Token::NUMBER, "0"));
         }
-        if (root->left && root->left->data.value == "1") {
+        if (root->left && (root->left->data.value == "1" || root->left->data.value == "1.000000")) {
             return root->right;
         }
-        if (root->right && root->right->data.value == "1") {
+        if (root->right && (root->right->data.value == "1" || root->right->data.value == "1.000000")) {
             return root->left;
+        }
+    }
+
+    if (root->data.value == "^"){
+        if (root->right && (root->right->data.value == "1" || root->right->data.value == "1.000000")) {
+            return root->left;
+        }
+        if (root->right && root->right->data.value == "0") {
+            return new Node(Token::TokenData(Token::NUMBER, "1"));
         }
     }
 
@@ -176,7 +185,7 @@ std::string Differentiator::toInfix(Node* root) {
         std::string left = root->left ? toInfix(root->left) : "";
         std::string right = root->right ? toInfix(root->right) : "";
 
-        return "(" + left + " " + root->data.value + " " + right + ")";
+        return "(" + left + ") " + root->data.value + "(" + right + ")";
     }
 
     // If it's a number or a variable, just return its value

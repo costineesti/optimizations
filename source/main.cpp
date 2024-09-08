@@ -36,8 +36,8 @@ int main() {
     Node* differential = diff.differentiate(root, "x");
     Node* simplified_differential = diff.simplify(differential);
     const std::string diff_expression = diff.toInfix(simplified_differential);
-    std::cout << "The differential w.r.t x: " << diff_expression << std::endl;
-    std::cout << "Differential postorder: " << diff.postorder(differential) << std::endl;
+    auto diff_postorder = diff.postorder(simplified_differential);
+    std::cout << "Differential postorder: " << diff_postorder << std::endl;
     /*
 
     std::cout << "Golden section minima: ";

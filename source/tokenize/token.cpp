@@ -41,52 +41,53 @@ std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
     std::vector<Token::TokenData> tokens;
     std::string temp;
 
-    for (size_t i = 0; i < expr.size(); i++) {
+    for (size_t i = 0; i < expr.size(); ++i) {
         char c = expr[i];
-        // if it is space
+
+        // Ignore spaces
         if (std::isspace(c)) continue;
 
-        // if number
-        if (std::isdigit(c) || (c == '.' && !temp.empty())) {
+        // Check for a negative number (e.g., "-1.000000")
+        if (c == '-' && (i == 0 || !std::isdigit(expr[i - 1]) && !std::isalpha(expr[i - 1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')')) {
+            temp += c;  // Start building the number with the negative sign
+            ++i;  // Move to the next character
+            while (i < expr.size() && (std::isdigit(expr[i]) || expr[i] == '.')) {
+                temp += expr[i];
+                ++i;
+            }
+            tokens.push_back({ Token::NUMBER, temp });
+            temp.clear();
+            --i;  // Adjust the index since the outer loop will increment it again
+        }
+        // If digit or part of a number (not negative)
+        else if (std::isdigit(c) || (c == '.' && !temp.empty())) {
             temp += c;
         }
+        // If not part of a number, process the token collected and then handle operators, variables, etc.
         else {
             if (!temp.empty()) {
-                tokens.push_back({ NUMBER, temp });
+                tokens.push_back({ Token::NUMBER, temp });
                 temp.clear();
             }
-            // if variable
+            // Handle variable, parentheses, and operators
             if (c == 'x') {
-                tokens.push_back({ VARIABLE, "x" });
-            }
-            else if (c == 'y') {
-                tokens.push_back({ VARIABLE, "y" });
-            }
-            // if paran
-            else if (c == '(') {
-                tokens.push_back({ LEFT_PARAN, "(" });
-            }
-            else if (c == ')') {
-                tokens.push_back({ RIGHT_PARAN, ")" });
-            }
-            // if operator
-            else if (c == '*' || c == '+' || c == '-' || c == '/' || c == '^') {
-                tokens.push_back({ OPERATOR, std::string(1, c) });
-            }
-            // if function
-            else if (std::isalpha(c)) {
-                while (i < expr.size() && std::isalpha(expr[i])) {
-                    temp += expr[i];
-                    i++;
-                }
-                tokens.push_back({ FUNCTION, temp });
-                temp.clear();
-                i--; // Decrement i because it will be incremented in the loop
+                tokens.push_back({ Token::VARIABLE, "x" });
+            } else if (c == 'y') {
+                tokens.push_back({ Token::VARIABLE, "y" });
+            } else if (c == '(') {
+                tokens.push_back({ Token::LEFT_PARAN, "(" });
+            } else if (c == ')') {
+                tokens.push_back({ Token::RIGHT_PARAN, ")" });
+            } else if (c == '*' || c == '+' || c == '-' || c == '/' || c == '^') {
+                tokens.push_back({ Token::OPERATOR, std::string(1, c) });
             }
         }
     }
-    if (!temp.empty())
-        tokens.push_back({ NUMBER, temp }); // if anything is left, then save before returning the tokens.
+
+    if (!temp.empty()) {
+        tokens.push_back({ Token::NUMBER, temp });
+    }
+
     return tokens;
 }
 
@@ -160,6 +161,7 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
                 operatorStack.pop();
             }
         }
+        auto last_token = token;
     }
 
     // After the loop, pop all operators from the stack to the output queue
@@ -171,6 +173,7 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
     return outputQueue;
 }
 
+// Evaluation of a reverse polish notation.
 double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, const std::map<std::string, double>& variableValues) {
     std::stack<double> evalStack;
 
