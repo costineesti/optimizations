@@ -192,24 +192,63 @@ std::string Differentiator::toInfix(Node* root) {
     return root->data.value;
 }
 
-/** @brief Computin the jacobian of the mathematical expression. 
+/** @brief Computing the jacobian of the mathematical expression. 
  * Using Eigen because there are no matrices in C++, only an array of an array.
  */
 Eigen::MatrixXd Differentiator::computeJacobian(Node* function, const std::map<std::string, double>& variablesMap){
+    Token tokenizer;
     const int numVariables = variablesMap.size();
-    Eigen::MatrixXd jacobian(1, numVariables);
+    Eigen::MatrixXd jacobian(1, numVariables); // 1 x n
 
     // Diferrentiate the function w.r.t every variable.
     int col = 0;
     for (const auto& [var, value] : variablesMap){
         Node* partialDerivative = this->differentiate(function, var);
         Node* simplifiedPartial = this->simplify(partialDerivative);
+        auto diff_expression = this->toInfix(simplifiedPartial);
+        auto tokens_differential = tokenizer.tokenize(diff_expression);
+        auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
+        double evaluatedPartial = tokenizer.evaluateRPN(outputQueue_differential, variablesMap);
+
+        jacobian(0,col) = evaluatedPartial;
+        col++;
     }   
 
     return jacobian;
 }
 
+/** @brief Computing the hessian of the mathematical expression. */
 Eigen::MatrixXd Differentiator::computeHessian(Node* function, const std::map<std::string, double>& variablesMap){
-    Eigen::MatrixXd hessian;
+    const int numVariables = variablesMap.size();
+    Eigen::MatrixXd hessian(numVariables, numVariables); // n x n
+    Token tokenizer;
+
+    // Double differentiate the function w.r.t every variable.
+    // Compute the second-order partial derivatives (Hessian matrix)
+    int row = 0;
+    for (const auto& [var1, value1] : variablesMap){
+        int col = 0;
+        for (const auto& [var2, value2] : variablesMap){
+            // First, compute the derivative of the function with respect to var1
+            Node* firstDerivative = this->differentiate(function, var1);
+            Node* simplifiedFirstDerivative = this->simplify(firstDerivative);
+
+            // Now, compute the derivative of the first derivative with respect to var2
+            Node* secondDerivative = this->differentiate(simplifiedFirstDerivative, var2);
+            Node* simplifiedSecondDerivative = this->simplify(secondDerivative);
+            auto diff_expression = this->toInfix(simplifiedSecondDerivative);
+            auto tokens_differential = tokenizer.tokenize(diff_expression);
+            auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
+
+            // Evaluate the second-order derivative at the provided variable values
+            double evaluatedPartial = tokenizer.evaluateRPN(outputQueue_differential, variablesMap);
+
+            // Assign the result to the Hessian matrix
+            hessian(row, col) = evaluatedPartial;
+            col++;
+        }
+        row++;
+    }
+
     return hessian;
 }

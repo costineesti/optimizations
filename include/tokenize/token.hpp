@@ -13,6 +13,9 @@
 #include <queue>  // For queue
 #include <array> //  For tokens.
 
+/** @brief: This class is supposed to tokenize a mathematical expression 
+After tokenizing, it will be passed further to the Shunting Yard algorithm or the AST.
+*/
 class Token {
 public:
 

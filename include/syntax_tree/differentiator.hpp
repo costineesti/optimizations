@@ -1,5 +1,6 @@
 #ifndef DIFFERENTIATOR_HPP
-#define DIFFERENTATOR_HPP
+#define DIFFERENTIATOR_HPP
+
 #include "./ast.hpp"
 #include "../Eigen/Dense"
 

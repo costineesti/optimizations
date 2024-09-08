@@ -48,30 +48,32 @@ int main() {
     std::cout << tokenizer.fibonacci_series(outputQueue, -3, 0, 0.01);
     std::cout << std::endl;
 
-    */
-   double xValue, yValue;
-   std::cout << "Enter the value of x: ";
-   std::cin >> xValue;
+        */
+    double xValue, yValue;
+    std::cout << "Enter the value of x: ";
+    std::cin >> xValue;
 
-   std::cout << "Enter the value of y: ";
-   std::cin >> yValue;
+    std::cout << "Enter the value of y: ";
+    std::cin >> yValue;
 
-   std::map<std::string, double> x0;
-   x0["x"] = xValue; x0["y"] = yValue;
+    std::map<std::string, double> x0;
+    x0["x"] = xValue; x0["y"] = yValue;
 
-   double result = tokenizer.evaluateRPN(outputQueue, x0);
-   
-   std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
+    double result = tokenizer.evaluateRPN(outputQueue, x0);
+    // Get value for differential
+    auto tokens_differential = tokenizer.tokenize(diff_expression);
+    auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
+    double result_diff = tokenizer.evaluateRPN(outputQueue_differential, x0);
 
-   // Get value for differential
-   auto tokens_differential = tokenizer.tokenize(diff_expression);
-   auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
-   double result_diff = tokenizer.evaluateRPN(outputQueue_differential, x0);
+    std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
+    std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << std::endl;
 
-   std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
-   std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << std::endl;
+    Newton newton(root, 0.001, x0);
+    std::cout << "The interval found by Newton method: " << std::endl;
+    newton._run();
 
-   return 0;
+
+    return 0;
 }
 
 /*
