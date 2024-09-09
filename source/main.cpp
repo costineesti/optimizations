@@ -68,9 +68,15 @@ int main() {
     std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
     std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << std::endl;
 
-    Newton newton(root, 0.001, x0);
-    std::cout << "The interval found by Newton method: " << std::endl;
+    Newton newton(root, x0);
+    std::cout << "The interval found by Newton method: ";
     newton._run();
+    std::cout << std::endl;
+
+    // STEEPEST DESCENT
+    Steepest_Descent steepest_descent(root, expression, 0.001, 0, 10, x0);
+    std::cout << "Steepest Descent: " << std::endl;
+    steepest_descent._run();
 
 
     return 0;

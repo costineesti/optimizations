@@ -74,6 +74,8 @@ std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
                 tokens.push_back({ Token::VARIABLE, "x" });
             } else if (c == 'y') {
                 tokens.push_back({ Token::VARIABLE, "y" });
+            } else if (c == 's') {
+                tokens.push_back({ Token::VARIABLE, "s" });
             } else if (c == '(') {
                 tokens.push_back({ Token::LEFT_PARAN, "(" });
             } else if (c == ')') {
@@ -213,7 +215,7 @@ inputs:
 output:
     - function minima.
 */
-double Token::golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
     double d = b - a;
     double x1, x2, f_x1, f_x2;
     while(b-a > e){
@@ -238,7 +240,7 @@ double Token::golden_section(std::queue<Token::TokenData> outputQueue, double a,
     double point = (a+b)/2;
     std::map<std::string, double> final_point;
     final_point["x"] = point;
-    return evaluateRPN(outputQueue, final_point);
+    return {a,b};
 }
 
 /**
@@ -251,7 +253,7 @@ inputs:
 output:
     - function minima.
 */
-double Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
     double f1 = 2, f2 = 3, f3 = 5;
     double d, x1, x2, f_x1, f_x2;
     while(b-a > e){
@@ -279,5 +281,5 @@ double Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double 
     double point = (a+b)/2;
     std::map<std::string, double> final_point;
     final_point["x"] = point;
-    return evaluateRPN(outputQueue, final_point);
+    return {a,b};
 }

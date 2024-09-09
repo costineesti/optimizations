@@ -16,7 +16,6 @@ class Newton : public Differentiator {
         // Constructor
         Newton(
             Node* function,
-            double tolerance,
             std::map<std::string, double> x0
         );
         // Destructor
@@ -24,7 +23,6 @@ class Newton : public Differentiator {
         virtual void _run();
     private:
         Node* m_function;
-        double m_tolerance;
         std::map<std::string, double> m_x0;
         Differentiator diff;
         std::map<std::string, double> x_new;

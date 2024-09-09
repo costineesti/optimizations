@@ -6,11 +6,9 @@
  */
 Newton::Newton(
     Node* function,
-    double tolerance,
     std::map<std::string, double> x0
 )
 : m_function(function)
-, m_tolerance(tolerance)
 , m_x0(x0)
 , x_new{{"x", 0.0}, {"y", 0.0}}
 {}
@@ -35,6 +33,7 @@ void Newton::_run(){
         }
 
         // Perform the update: x_new = x0 - inv(H) * G
+        // This method takes us to a minima instantly. no need for tolerance check.
         Eigen::VectorXd x_newVector = x0Vector - hessianInverse * gradient.transpose(); // See if gradient needs transposed.
 
         // Update x_new (which is a std::map) with the new values
