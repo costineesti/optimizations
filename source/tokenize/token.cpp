@@ -48,7 +48,8 @@ std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
         if (std::isspace(c)) continue;
 
         // Check for a negative number (e.g., "-1.000000")
-        if (c == '-' && (i == 0 || !std::isdigit(expr[i - 1]) && !std::isalpha(expr[i - 1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')')) {
+        if (c == '-' && (!std::isdigit(expr[i - 1]) && !std::isalpha(expr[i - 1])
+        && !std::isalpha(expr[i+1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')')) {
             temp += c;  // Start building the number with the negative sign
             ++i;  // Move to the next character
             while (i < expr.size() && (std::isdigit(expr[i]) || expr[i] == '.')) {
@@ -56,6 +57,18 @@ std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
                 ++i;
             }
             tokens.push_back({ Token::NUMBER, temp });
+            temp.clear();
+            --i;  // Adjust the index since the outer loop will increment it again
+        }
+        else if (c == '-' && (!std::isalpha(expr[i - 1]) && !std::isdigit(expr[i-1])
+        && std::isalpha(expr[i+1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')')) {
+            temp += c;  // Start building the variable with the negative sign
+            ++i;  // Move to the next character
+            while (i < expr.size() && (std::isalpha(expr[i]))) {
+                temp += expr[i];
+                ++i;
+            }
+            tokens.push_back({ Token::VARIABLE, temp });
             temp.clear();
             --i;  // Adjust the index since the outer loop will increment it again
         }
@@ -187,8 +200,15 @@ double Token::evaluateRPN(std::queue<Token::TokenData> outputQueue, const std::m
             evalStack.push(std::stod(token.value));
         }
         else if (token.type == Token::VARIABLE) {
-            // Use the map to get the variable's value
-            evalStack.push(variableValues.at(token.value));
+            // Check if the variable is negative (starts with '-')
+            if (token.value[0] == '-') {
+                // Extract the variable name after the '-' and negate the value
+                std::string varName = token.value.substr(1);  // Skip the first character ('-')
+                evalStack.push(-variableValues.at(varName));
+            } else {
+                // Push the value of the variable directly
+                evalStack.push(variableValues.at(token.value));
+            }
         }
         else if (token.type == Token::OPERATOR) {
             double b = evalStack.top(); evalStack.pop();
@@ -215,7 +235,7 @@ inputs:
 output:
     - function minima.
 */
-std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e, const char* variableName){
     double d = b - a;
     double x1, x2, f_x1, f_x2;
     while(b-a > e){
@@ -224,8 +244,8 @@ std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outp
         x2 = a + d;
         std::map<std::string, double> x1_map;
         std::map<std::string, double> x2_map;
-        x1_map["x"] = x1;
-        x2_map["x"] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
+        x1_map[variableName] = x1;
+        x2_map[variableName] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
 
         f_x1 = evaluateRPN(outputQueue, x1_map);
         f_x2 = evaluateRPN(outputQueue, x2_map);
@@ -239,7 +259,7 @@ std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outp
     }
     double point = (a+b)/2;
     std::map<std::string, double> final_point;
-    final_point["x"] = point;
+    final_point[variableName] = point;
     return {a,b};
 }
 
@@ -253,7 +273,7 @@ inputs:
 output:
     - function minima.
 */
-std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e){
+std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e, const char* variableName){
     double f1 = 2, f2 = 3, f3 = 5;
     double d, x1, x2, f_x1, f_x2;
     while(b-a > e){
@@ -262,8 +282,8 @@ std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> ou
         x2 = a+d*f1/f2;
         std::map<std::string, double> x1_map;
         std::map<std::string, double> x2_map;
-        x1_map["x"] = x1;
-        x2_map["x"] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
+        x1_map[variableName] = x1;
+        x2_map[variableName] = x2; // This is where it might be a hussle; because these methods are for functions with only one variable..
 
         f_x1 = evaluateRPN(outputQueue, x1_map);
         f_x2 = evaluateRPN(outputQueue, x2_map);
@@ -280,6 +300,6 @@ std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> ou
     }
     double point = (a+b)/2;
     std::map<std::string, double> final_point;
-    final_point["x"] = point;
+    final_point[variableName] = point;
     return {a,b};
 }

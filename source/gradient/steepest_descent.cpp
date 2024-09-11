@@ -73,8 +73,7 @@ double norm(const std::map<std::string, double>& point1, const std::map<std::str
             std::cout << "F(s): " + function_str << std::endl;
             auto tokens = this->tokenizer.tokenize(function_str);
             auto outputQueue = this->tokenizer.ShuntingYard(tokens);
-            this->d = this->b - this->a;
-            auto result = tokenizer.golden_section(outputQueue, this->a, this->b, this->m_tolerance/10);
+            auto result = tokenizer.golden_section(outputQueue, this->a, this->b, this->m_tolerance/10, "s");
             this->a = result.first; this->b = result.second;
             step = (this->a + this->b)/2;
             x_new["x"] = -gradient(0,0)*step + x_curr["x"];

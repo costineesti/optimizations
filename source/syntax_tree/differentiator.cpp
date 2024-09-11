@@ -14,7 +14,9 @@ Node* Differentiator::differentiate(Node* root, const std::string& var) {
     if (root->data.type == Token::VARIABLE) {
         if (root->data.value == var) {
             return new Node(Token::TokenData(Token::NUMBER, "1"));
-        } else {
+        }   else if(root->data.value == "-"+var){
+            return new Node(Token::TokenData(Token::NUMBER, "-1"));
+        }   else {
             return new Node(Token::TokenData(Token::NUMBER, "0"));
         }
     }

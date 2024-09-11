@@ -46,8 +46,8 @@ public:
 	std::vector<Token::TokenData> tokenize(const std::string &expr);
 	std::queue<Token::TokenData> ShuntingYard(const std::vector<Token::TokenData> &tokens);
 	double evaluateRPN(std::queue<Token::TokenData> outputQueue, const std::map<std::string, double>& variableValues);
-	std::pair<double,double> golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e);
-	std::pair<double,double> fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e);
+	std::pair<double,double> golden_section(std::queue<Token::TokenData> outputQueue, double a, double b, double e, const char* variableName);
+	std::pair<double,double> fibonacci_series(std::queue<Token::TokenData> outputQueue, double a, double b, double e, const char* variableName);
 
 private:
 	int getPrecedence(const std::string &op);
