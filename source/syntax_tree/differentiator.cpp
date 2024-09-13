@@ -124,7 +124,7 @@ Node* Differentiator::simplify(Node* root) {
         // Create a Token instance to evaluate the RPN expression
         Token tokenizer;
         std::map<std::string, double> nule;
-        nule["x"] = 0; nule["y"] = 0;
+        nule["x"] = 0; nule["y"] = 0; nule["s"] = 0;
         double result = tokenizer.evaluateRPN(rpnQueue, nule);
 
         // Replace the current node with a simplified numeric result
@@ -133,8 +133,8 @@ Node* Differentiator::simplify(Node* root) {
 
     // Handle multiplication (*) simplification
     if (root->data.value == "*") {
-        if ((root->left && root->left->data.value == "0") || 
-            (root->right && root->right->data.value == "0")) {
+        if ((root->left && (root->left->data.value == "0" || root->left->data.value == "0.000000")) || 
+            (root->right && (root->right->data.value == "0" || root->right->data.value == "0.000000"))) {
             return new Node(Token::TokenData(Token::NUMBER, "0"));
         }
         if (root->left && (root->left->data.value == "1" || root->left->data.value == "1.000000")) {
@@ -149,17 +149,17 @@ Node* Differentiator::simplify(Node* root) {
         if (root->right && (root->right->data.value == "1" || root->right->data.value == "1.000000")) {
             return root->left;
         }
-        if (root->right && root->right->data.value == "0") {
+        if (root->right && (root->right->data.value == "0" || root->right->data.value == "0.000000")) {
             return new Node(Token::TokenData(Token::NUMBER, "1"));
         }
     }
 
     // Handle addition (+) simplification
     if (root->data.value == "+" || root->data.value == "-") {
-        if (root->left && root->left->data.value == "0") {
+        if (root->left && (root->left->data.value == "0" || root->left->data.value == "0.000000")) {
             return root->right;
         }
-        if (root->right && root->right->data.value == "0") {
+        if (root->right && (root->right->data.value == "0" || root->right->data.value == "0.000000")) {
             return root->left;
         }
     }
@@ -172,27 +172,43 @@ Node* Differentiator::simplify(Node* root) {
 std::string Differentiator::toInfix(Node* root) {
     if (!root) return "";
 
-    // If it's a function (e.g., sin, cos), we need to wrap the argument in parentheses
+    // If it's a function (e.g., sin, cos), wrap the argument in parentheses
     if (root->data.type == Token::FUNCTION) {
-        // Ensure the left side is not null, since functions like sin, cos are unary
         if (root->left) {
-            return root->data.value + "(" + toInfix(root->left) + ")";
+            return root->data.value + toInfix(root->left);
         } else {
-            return root->data.value + "()";  // Handle case where left is null (if needed)
+            return root->data.value + "()";  // Handle case where left is null (uncommon)
         }
     }
 
-    // If it's an operator, we need to handle left and right sides
+    // If it's an operator, handle left and right sides
     if (root->data.type == Token::OPERATOR) {
         std::string left = root->left ? toInfix(root->left) : "";
         std::string right = root->right ? toInfix(root->right) : "";
 
-        return "(" + left + ") " + root->data.value + "(" + right + ")";
+        // Only add parentheses when needed based on operator precedence
+        if (root->data.value == "-") {
+            // Use parentheses for low-precedence operations (addition, subtraction)
+            return "(" + left + " " + root->data.value + " " + right + ")";
+        } else {
+            // Don't use parentheses for higher precedence (multiplication, division)
+            return left + " " + root->data.value + " " + right;
+        }
     }
 
-    // If it's a number or a variable, just return its value
+    // If it's a number or a variable, return its value
+    if (root->data.type == Token::NUMBER) {
+        // If the number is negative, wrap it in parentheses
+        double value = std::stod(root->data.value);
+        if (value < 0) {
+            return "(" + root->data.value + ")";
+        }
+    }
+
+    // If it's a number or a variable, return its value (without extra parentheses)
     return root->data.value;
 }
+
 
 /** @brief Computing the jacobian of the mathematical expression. 
  * Using Eigen because there are no matrices in C++, only an array of an array.
@@ -254,3 +270,12 @@ Eigen::MatrixXd Differentiator::computeHessian(Node* function, const std::map<st
 
     return hessian;
 }
+
+double Differentiator::norm(const std::map<std::string, double>& point1, const std::map<std::string, double>& point2) {
+            // Compute the differences between the x and y coordinates
+            double dx = point2.at("x") - point1.at("x");
+            double dy = point2.at("y") - point1.at("y");
+
+            // Compute and return the Euclidean norm (distance)
+            return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
+        }  

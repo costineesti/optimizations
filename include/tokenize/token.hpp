@@ -42,6 +42,7 @@ public:
 		}
 	};
 
+	std::string replace_all(std::string& str, const std::string& from, const std::string& to);
 	std::string tokenTypeToString(TokenData tkData);
 	std::vector<Token::TokenData> tokenize(const std::string &expr);
 	std::queue<Token::TokenData> ShuntingYard(const std::vector<Token::TokenData> &tokens);

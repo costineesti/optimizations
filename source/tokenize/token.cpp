@@ -49,7 +49,7 @@ std::vector<Token::TokenData> Token::tokenize(const std::string& expr) {
 
         // Check for a negative number (e.g., "-1.000000")
         if (c == '-' && (!std::isdigit(expr[i - 1]) && !std::isalpha(expr[i - 1])
-        && !std::isalpha(expr[i+1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')')) {
+        && !std::isalpha(expr[i+1]) && !std::isspace(expr[i - 1]) && expr[i - 1] != ')' && expr[i+1] != '(')) {
             temp += c;  // Start building the number with the negative sign
             ++i;  // Move to the next character
             while (i < expr.size() && (std::isdigit(expr[i]) || expr[i] == '.')) {
@@ -302,4 +302,14 @@ std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> ou
     std::map<std::string, double> final_point;
     final_point[variableName] = point;
     return {a,b};
+}
+
+// Helper function to replace all occurrences of a substring in a string
+std::string Token::replace_all(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = 0;
+    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'xy'
+    }
+    return str;
 }

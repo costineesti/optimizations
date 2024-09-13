@@ -28,16 +28,6 @@ Steepest_Descent::Steepest_Descent(
 
 Steepest_Descent::~Steepest_Descent(){}
 
-// Helper function to replace all occurrences of a substring in a string
-std::string replace_all(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        str.replace(start_pos, from.length(), to);
-        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'xy'
-    }
-    return str;
-}
-
 // Lambda to add "+" before positive numbers in order for the parser to know in cases like (-x+y)
 auto to_string_with_sign = [](double value) -> std::string {
     if (value >= 0) {
@@ -47,28 +37,19 @@ auto to_string_with_sign = [](double value) -> std::string {
     }
 };
 
-double norm(const std::map<std::string, double>& point1, const std::map<std::string, double>& point2) {
-    // Compute the differences between the x and y coordinates
-    double dx = point2.at("x") - point1.at("x");
-    double dy = point2.at("y") - point1.at("y");
-
-    // Compute and return the Euclidean norm (distance)
-    return std::sqrt(std::pow(dx, 2) + std::pow(dy, 2));
-    }
-
 void Steepest_Descent::_run(){
     unsigned int k = 0;
     std::string function_str = m_expression;
     
-    while(norm(x_curr, x_new) > m_tolerance){
+    while(differentiator.norm(x_curr, x_new) > m_tolerance){
         x_curr = x_new;
         auto gradient = this->differentiator.computeJacobian(m_function, x_curr);
 
         std::string grad_x = "("+std::to_string(-gradient(0, 0)) +"*s" + to_string_with_sign(x_curr["x"])+")";  // Gradient at x
         std::string grad_y = "("+std::to_string(-gradient(0, 1)) +"*s" + to_string_with_sign(x_curr["y"])+")";  // Gradient at y
         // Replace "x" with grad_x and "y" with grad_y in the function
-        function_str = replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
-        function_str = replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
+        function_str = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
+        function_str = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
         auto tokens = this->tokenizer.tokenize(function_str);
         auto outputQueue = this->tokenizer.ShuntingYard(tokens);
         auto result = tokenizer.golden_section(outputQueue, this->a, this->b, this->m_tolerance/10, "s");

@@ -17,6 +17,8 @@ class Differentiator : public AST{
         Eigen::MatrixXd computeJacobian(Node* function, const std::map<std::string, double>& variablesMap);
         /** @brief compute the hessian using Eigen */
         Eigen::MatrixXd computeHessian(Node* function, const std::map<std::string, double>& variablesMap);
+        /** @brief Compute the norm between two vectors */
+        double norm(const std::map<std::string, double>& point1, const std::map<std::string, double>& point2);
 };
 
 #endif

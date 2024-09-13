@@ -36,6 +36,7 @@ int main() {
     Node* differential = diff.differentiate(root, "x");
     Node* simplified_differential = diff.simplify(differential);
     const std::string diff_expression = diff.toInfix(simplified_differential);
+    std::cout << "infix: " << diff_expression << std::endl;
     auto diff_postorder = diff.postorder(simplified_differential);
     std::cout << "Differential postorder: " << diff_postorder << std::endl;
     /*
@@ -78,7 +79,10 @@ int main() {
     std::cout << "Steepest Descent: " << std::endl;
     steepest_descent._run();
 
-
+    // CONJUGATE GRADIENT
+    Conjugate_Gradient conjugate_gradient(root, expression, x0, 0.0001);
+    std::cout << "Conjugate Gradient: " << std::endl;
+    conjugate_gradient._run();
     return 0;
 }
 

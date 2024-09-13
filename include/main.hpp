@@ -3,3 +3,4 @@
 #include "syntax_tree/differentiator.hpp"
 #include "gradient/newton.hpp"
 #include "gradient/steepest_descent.hpp"
+#include "gradient/conjugate_gradient.hpp"
