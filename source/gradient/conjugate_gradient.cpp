@@ -33,55 +33,6 @@ auto to_string_with_sign = [](double value) -> std::string {
     }
 };
 
-double Conjugate_Gradient::solve_for_step(std::string s_expression){
-    auto tokens = tokenizer.tokenize(s_expression);
-    std::queue<Token::TokenData> outputQueue = tokenizer.ShuntingYard(tokens);
-    AST ast;
-    Node* root = ast.buildAST(outputQueue);
-    Node* differential = differentiator.differentiate(root, "s");
-    Node* simplified_differential = differentiator.simplify(differential);
-    const std::string diff_expression = differentiator.toInfix(simplified_differential);
-    std::cout << "'s' differential: " << diff_expression << std::endl;
-    auto diff_postorder = differentiator.postorder(simplified_differential);
-    // .... Solve for s -- what solver should I use?
-    auto diff_tokens = tokenizer.tokenize(diff_postorder);
-    auto diff_rpn = tokenizer.ShuntingYard(diff_tokens);
-
-    double s_coefficient = 0.0; // Coefficient of 's' (a in a*s + b = 0)
-    double constant_term = 0.0; // Constant term (b in a*s + b = 0)
-    bool found_s = false;
-
-    while (!diff_rpn.empty()) {
-        // Get the front token from the queue
-        Token::TokenData token = diff_rpn.front();
-        diff_rpn.pop();  // Remove the token from the queue
-
-        if (token.type == Token::VARIABLE && token.value == "s") {
-            // Mark that we found the variable 's'
-            found_s = true;
-        } else if (token.type == Token::NUMBER) {
-            if (found_s) {
-                // The number before 's' is its coefficient
-                s_coefficient = std::stod(token.value);
-                found_s = false; // Reset the flag
-            } else {
-                // Any other number is treated as the constant term
-                constant_term = std::stod(token.value);
-            }
-        }
-    }
-
-    // Step 3: Solve for 's' in the linear equation: a*s + b = 0
-    if (s_coefficient != 0) {
-        // Solving the equation s = -b / a
-        return -constant_term / s_coefficient;
-    } else {
-        std::cerr << "Error: No valid coefficient for 's'." << std::endl;
-        return 0.0; // Or handle error appropriately
-    }
-    return 1;
-}
-
 // Return the step by imposing d/ds == 0
 /** @brief
  * Split F(s) into a*s^2 + b*s + c so I can solve it by using solve_deg2.
@@ -113,32 +64,42 @@ int solve_deg2(double a, double b, double c, double &x1, double &x2)
 /// http://mathworld.wolfram.com/CubicEquation.html
 /// This is for 3rd degree equations, taken from https://github.com/CL2-UWaterloo/f1tenth_ws/blob/main/src/scan_matching/src/transform.cpp
 
-void Conjugate_Gradient::_run(){
 
+double Conjugate_Gradient::solve_for_step_2nd_order(std::string& s_expression) {
+    // Tokenize the expression and convert it to RPN (Reverse Polish Notation)
+    auto tokens = tokenizer.tokenize(s_expression);
+    auto rpnQueue = tokenizer.ShuntingYard(tokens);
+
+    // a*s^2 + b*s + c = 0 => s = -b/2a (where the differential equals 0).
+    double c = tokenizer.evaluateRPN(rpnQueue, {{"s", 0}});
+    double a_plus_b = tokenizer.evaluateRPN(rpnQueue, {{"s", 1}}) - c;
+    double a_minus_b = tokenizer.evaluateRPN(rpnQueue, {{"s", -1}}) - c;
+    double a = (a_plus_b + a_minus_b)/2;
+    double b = a_plus_b - a;
+    std::cout << "a: " << a << " b: " << b << " c: " << c << "\n";
+
+    return -b/2/a;
+}
+
+
+void Conjugate_Gradient::_run(){
     int k = 0;
     std::string substitute_function = m_expression;
 
-    // Computing the initial points and initial direction.
-    auto gradient = differentiator.computeJacobian(m_function, x_new);
-    std::string grad_x = "("+std::to_string(-gradient(0, 0)) +"*s" + to_string_with_sign(x_curr["x"])+")";  // Gradient at x:x0 + s*dir_k 
-    std::string grad_y = "("+std::to_string(-gradient(0, 1)) +"*s" + to_string_with_sign(x_curr["y"])+")";  // Gradient at y:x0 + s*dir_k
-    // Replace "x" with grad_x and "y" with grad_y in the function
-    substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
-    substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
-    std::cout << substitute_function << std::endl;
-    // Now solve for s by equalizing d/ds(substitute_function) == 0.
-    this->step = solve_for_step(substitute_function);
-    std::cout << "step: " << this->step << std::endl;
+    while(differentiator.norm(x_curr, x_new) > m_tolerance){
 
-
-    // while(differentiator.norm(x_curr, x_new) > m_tolerance){
-
-    //     x_curr = x_new;
-    //     // Compute the gradient
-    //     auto gradient = differentiator.computeJacobian(m_function, x_curr);
-
-        //BETA = gradient.transpose()*gradient;
-
-
-    // }
+      x_curr = x_new;
+      // Computing the initial points and initial direction.
+      auto gradient = differentiator.computeJacobian(m_function, x_new);
+      std::string grad_x = "("+std::to_string(-gradient(0, 0)) +"*s" + to_string_with_sign(x_curr["x"])+")";  // Gradient at x:x0 + s*dir_k 
+      std::string grad_y = "("+std::to_string(-gradient(0, 1)) +"*s" + to_string_with_sign(x_curr["y"])+")";  // Gradient at y:x0 + s*dir_k
+      // Replace "x" with grad_x and "y" with grad_y in the function
+      substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
+      substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
+      std::cout << substitute_function << "\n";
+      // Now solve for s by equalizing d/ds(substitute_function) == 0.
+      this->step = solve_for_step_2nd_order(substitute_function);
+      std::cout << "step: " << this->step << std::endl;
+    } // end while
+    
 }
