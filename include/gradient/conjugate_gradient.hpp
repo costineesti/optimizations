@@ -36,7 +36,7 @@ class Conjugate_Gradient : public Differentiator{
         std::string m_expression;
         Differentiator differentiator;
         Token tokenizer;
-        double solve_for_step(std::string s_expression);
+        double solve_for_step_2nd_order(std::string& s_expression);
 };
 
 #endif
