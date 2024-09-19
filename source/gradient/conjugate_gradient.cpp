@@ -18,8 +18,11 @@ Conjugate_Gradient::Conjugate_Gradient(
 , x_curr{{"x", 0.0}, {"y", 0.0}}
 , m_tolerance(tolerance)
 , x_new(x0)
-, BETA(0.0)
+, BETA_Fletcher_Reeves(0.0)
+, BETA_Polak_Ribiere(0.0)
 , step(0.0)
+, a(0)
+, b(10)
 {}
 
 Conjugate_Gradient::~Conjugate_Gradient(){}
@@ -76,30 +79,125 @@ double Conjugate_Gradient::solve_for_step_2nd_order(std::string& s_expression) {
     double a_minus_b = tokenizer.evaluateRPN(rpnQueue, {{"s", -1}}) - c;
     double a = (a_plus_b + a_minus_b)/2;
     double b = a_plus_b - a;
-    std::cout << "a: " << a << " b: " << b << " c: " << c << "\n";
 
     return -b/2/a;
 }
 
+/** @brief Conjugate Gradient Solver using BETA computing by Fletcher-Reeves method */
+void Conjugate_Gradient::Solver_Fletcher_Reeves(){
+    // initialize local variables.
+    std::map<std::string, double> x_curr_FR = this->x_curr; 
+    std::map<std::string, double> x_new_FR = this->x_new;
+    Eigen::MatrixXd dir_k_local = this->dir_k;
+    Eigen::MatrixXd d_new_local = this->d_new;
+    Eigen::MatrixXd d_old_local = this->d_old;
+    double final_a, final_b;
+    unsigned int k = 0;
+
+    while(this->differentiator.norm(x_curr_FR, x_new_FR) > this->m_tolerance){
+        x_curr_FR = x_new_FR;
+        Eigen::MatrixXd gradient = differentiator.computeJacobian(m_function, x_curr_FR);
+        // Compute BETA. This is Fletcher-Reeves. Also compute the directions.
+        double scalar_denominator = (d_old_local * d_old_local.transpose()).value(); // Extract the scalar
+        double scalar_numerator = (gradient * gradient.transpose()).value(); // Extract the scalar
+        BETA_Fletcher_Reeves = scalar_numerator / scalar_denominator;
+        d_new_local = -gradient + BETA_Fletcher_Reeves * dir_k_local;
+
+        // Compute the function in "s"
+        std::string grad_x = "(" + std::to_string(d_new_local(0, 0)) + "*s" + to_string_with_sign(x_curr_FR["x"]) + ")";  // Gradient at x:x0 + s*dir_k 
+        std::string grad_y = "(" + std::to_string(d_new_local(0, 1)) + "*s" + to_string_with_sign(x_curr_FR["y"]) + ")";  // Gradient at y:x0 + s*dir_k
+        std::string substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
+        substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
+
+        // solve for the interval in which we find a minima using Golden Section.
+        std::vector<Token::TokenData> tokens = this->tokenizer.tokenize(substitute_function);
+        std::queue<Token::TokenData> outputQueue = this->tokenizer.ShuntingYard(tokens);
+        std::pair<double,double> result = tokenizer.golden_section(outputQueue, this->a, this->b, this->m_tolerance/100, "s");
+        final_a = result.first; final_b = result.second;
+
+        // Compute the step as the middle of found interval.
+        this->step = (final_a+final_b)/2;
+        // Prepare variables for next iteration
+        x_new_FR["x"] = x_curr_FR["x"] + d_new_local(0,0)*this->step;
+        x_new_FR["y"] = x_curr_FR["y"] + d_new_local(0,1)*this->step;
+        d_old_local = gradient;
+        dir_k_local = d_new_local;
+        k++;
+    }
+    final_a = x_new_FR["x"];
+    final_b = x_new_FR["y"];
+    std::cout<< "The Conjugate Gradient Fletcher-Reeves found interval in "<< k <<" steps is a: "<<final_a<<" and b: "<<final_b<< "\n";
+}
+
+/** @brief Conjugate Gradient Solver using BETA computing by Fletcher-Reeves method */
+void Conjugate_Gradient::Solver_Polak_Ribiere(){
+    // initialize local variables.
+    std::map<std::string, double> x_curr_PR = this->x_curr; 
+    std::map<std::string, double> x_new_PR = this->x_new;
+    Eigen::MatrixXd dir_k_local = this->dir_k;
+    Eigen::MatrixXd d_new_local = this->d_new;
+    Eigen::MatrixXd d_old_local = this->d_old;
+    double final_a, final_b;
+    unsigned int k = 0;
+
+    while(this->differentiator.norm(x_curr_PR, x_new_PR) > this->m_tolerance){
+        x_curr_PR = x_new_PR;
+        Eigen::MatrixXd gradient = differentiator.computeJacobian(m_function, x_curr_PR);
+        // Compute BETA. This is Fletcher-Reeves. Also compute the directions.
+        double scalar_denominator = (d_old_local*d_old_local.transpose()).value(); // Extract the scalar.
+        auto diff = gradient-d_old_local;
+        double scalar_numerator =  (gradient * diff.transpose()).value(); // Extract the scalar
+        
+        BETA_Polak_Ribiere = scalar_numerator / scalar_denominator;
+        d_new_local = -gradient + BETA_Polak_Ribiere * dir_k_local;
+
+        // Compute the function in "s"
+        std::string grad_x = "(" + std::to_string(d_new_local(0, 0)) + "*s" + to_string_with_sign(x_curr_PR["x"]) + ")";  // Gradient at x:x0 + s*dir_k 
+        std::string grad_y = "(" + std::to_string(d_new_local(0, 1)) + "*s" + to_string_with_sign(x_curr_PR["y"]) + ")";  // Gradient at y:x0 + s*dir_k
+        std::string substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
+        substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
+
+        // solve for the interval in which we find a minima using Golden Section.
+        std::vector<Token::TokenData> tokens = this->tokenizer.tokenize(substitute_function);
+        std::queue<Token::TokenData> outputQueue = this->tokenizer.ShuntingYard(tokens);
+        std::pair<double,double> result = tokenizer.golden_section(outputQueue, this->a, this->b, this->m_tolerance/100, "s");
+        final_a = result.first; final_b = result.second;
+
+        // Compute the step as the middle of found interval.
+        this->step = (final_a+final_b)/2;
+        // Prepare variables for next iteration
+        x_new_PR["x"] = x_curr_PR["x"] + dir_k_local(0,0)*this->step;
+        x_new_PR["y"] = x_curr_PR["y"] + dir_k_local(0,1)*this->step;
+        d_old_local = gradient;
+        dir_k_local = d_new_local;
+        k++;
+    }
+    final_a = x_new_PR["x"];
+    final_b = x_new_PR["y"];
+    std::cout<< "The Conjugate Gradient Polak-Ribiere found interval in "<< k <<" steps is a: "<<final_a<<" and b: "<<final_b<< "\n";
+}
 
 void Conjugate_Gradient::_run(){
     int k = 0;
     std::string substitute_function = m_expression;
 
-    while(differentiator.norm(x_curr, x_new) > m_tolerance){
+    // Computing the initial points and initial direction.
+    dir_k = -differentiator.computeJacobian(m_function, x_new);
+    std::string grad_x = "("+std::to_string(dir_k(0, 0)) +"*s" + to_string_with_sign(x_new["x"])+")";  // Gradient at x:x0 + s*dir_k 
+    std::string grad_y = "("+std::to_string(dir_k(0, 1)) +"*s" + to_string_with_sign(x_new["y"])+")";  // Gradient at y:x0 + s*dir_k
+    // Replace "x" with grad_x and "y" with grad_y in the function
+    substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
+    substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
+    // Now solve for s by equalizing d/ds(substitute_function) == 0.
+    this->step = solve_for_step_2nd_order(substitute_function);
+    // Now substitute to compute x_new.
+    x_new["x"] = x_new["x"] + dir_k(0,0)*this->step;
+    x_new["y"] = x_new["y"] + dir_k(0,1)*this->step;
+    d_old = dir_k;
 
-      x_curr = x_new;
-      // Computing the initial points and initial direction.
-      auto gradient = differentiator.computeJacobian(m_function, x_new);
-      std::string grad_x = "("+std::to_string(-gradient(0, 0)) +"*s" + to_string_with_sign(x_curr["x"])+")";  // Gradient at x:x0 + s*dir_k 
-      std::string grad_y = "("+std::to_string(-gradient(0, 1)) +"*s" + to_string_with_sign(x_curr["y"])+")";  // Gradient at y:x0 + s*dir_k
-      // Replace "x" with grad_x and "y" with grad_y in the function
-      substitute_function = tokenizer.replace_all(m_expression, "x", grad_x); // I want to replace variable "x" with d/dx * s
-      substitute_function = tokenizer.replace_all(m_expression, "y", grad_y); // replace variable "y" with d/dy * s
-      std::cout << substitute_function << "\n";
-      // Now solve for s by equalizing d/ds(substitute_function) == 0.
-      this->step = solve_for_step_2nd_order(substitute_function);
-      std::cout << "step: " << this->step << std::endl;
-    } // end while
+    // Solve using Fletcher Reeves
+    this->Solver_Fletcher_Reeves();
+    // Solve using Polak Ribiere
+    this->Solver_Polak_Ribiere();
     
 }
