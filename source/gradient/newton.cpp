@@ -10,7 +10,6 @@ Newton::Newton(
 )
 : m_function(function)
 , m_x0(x0)
-, x_new{{"x", 0.0}, {"y", 0.0}}
 {}
 
 /** @brief Class Destructor */
@@ -27,25 +26,17 @@ void Newton::_run(){
         // Convert m_x0 (std::map) to an Eigen vector
         Eigen::VectorXd x0Vector(m_x0.size());
         int i = 0;
-        for (const auto& [var, value] : m_x0) {
-            x0Vector(i) = value; // Fill Eigen vector with values from m_x0
-            i++;
-        }
+        x0Vector[0] = m_x0["x"];
+        x0Vector[1] = m_x0["y"];
 
         // Perform the update: x_new = x0 - inv(H) * G
         // This method takes us to a minima instantly. no need for tolerance check.
         Eigen::VectorXd x_newVector = x0Vector - hessianInverse * gradient.transpose(); // See if gradient needs transposed.
 
         // Update x_new (which is a std::map) with the new values
-        i = 0;
-        for (auto& [var, value] : x_new) {
-            value = x_newVector(i);  // Update the map with the new values
-            std::cout << var << ":" << value << " ";
-            i++;
-        }
-        std::cout << std::endl;
+        std::cout<< "The Newton found interval in 1 step is a: " << x_newVector[0] << " and b: " << x_newVector[1] << "\n";
     }
     else{
-        std::cerr << "Hessian is singular (non-invertible)." << std::endl;
+        std::cerr << "Hessian is singular (non-invertible)." << "\n";
     }
 }
