@@ -27,16 +27,21 @@ class Conjugate_Gradient : public Differentiator{
         Node* m_function;
         std::map<std::string, double> x_new; // new x
         std::map<std::string, double> x_curr; // current x
-        double BETA;
+        double BETA_Fletcher_Reeves;
+        double BETA_Polak_Ribiere;
         Eigen::MatrixXd d_old;
         Eigen::MatrixXd d_new;
         Eigen::MatrixXd dir_k;
         double step;
         double m_tolerance;
+        double a;
+        double b;
         std::string m_expression;
         Differentiator differentiator;
         Token tokenizer;
         double solve_for_step_2nd_order(std::string& s_expression);
+        virtual void Solver_Fletcher_Reeves();
+        virtual void Solver_Polak_Ribiere();
 };
 
 #endif
