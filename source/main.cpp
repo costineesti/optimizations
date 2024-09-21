@@ -11,7 +11,7 @@ int main() {
 
     // Print the tokens
     for (const auto& token : tokens) {
-        std::cout << "Token Type: " << tokenizer.tokenTypeToString(token) << ", Value: " << token.value << std::endl;
+        std::cout << "Token Type: " << tokenizer.tokenTypeToString(token) << ", Value: " << token.value << "\n";
     }
 
     std::queue<Token::TokenData> outputQueue = tokenizer.ShuntingYard(tokens);
@@ -19,7 +19,7 @@ int main() {
     AST ast;
     Node* root = ast.buildAST(outputQueue);
     // Output the AST in post order ( which should be the same as RPN )
-    std::cout << "The postorder from the syntax tree: " << ast.postorder(root) << std::endl;
+    std::cout << "The postorder from the syntax tree: " << ast.postorder(root) << "\n";
 
     
     // Print the outputQueue => We can expect it in Reverse Polish Notation (RPN)
@@ -30,26 +30,16 @@ int main() {
         std::cout << token.value << " ";
         replacement.pop(); 
     }
-    std::cout << std::endl;
+    std::cout << "\n";
     
     Differentiator diff;
     Node* differential = diff.differentiate(root, "x");
     Node* simplified_differential = diff.simplify(differential);
     const std::string diff_expression = diff.toInfix(simplified_differential);
-    std::cout << "infix: " << diff_expression << std::endl;
+    std::cout << "infix: " << diff_expression << "\n";
     auto diff_postorder = diff.postorder(simplified_differential);
-    std::cout << "Differential postorder: " << diff_postorder << std::endl;
-    /*
-
-    std::cout << "Golden section minima: ";
-    std::cout << tokenizer.golden_section(outputQueue, -3, 0, 0.01);
-    std::cout << std::endl;
-
-    std::cout << "Fibonacci series minima: ";
-    std::cout << tokenizer.fibonacci_series(outputQueue, -3, 0, 0.01);
-    std::cout << std::endl;
-
-        */
+    std::cout << "Differential postorder: " << diff_postorder << "\n";
+ 
     double xValue, yValue;
     std::cout << "Enter the value of x: ";
     std::cin >> xValue;
@@ -66,26 +56,21 @@ int main() {
     auto outputQueue_differential = tokenizer.ShuntingYard(tokens_differential);
     double result_diff = tokenizer.evaluateRPN(outputQueue_differential, x0);
 
-    std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << std::endl;
-    std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << std::endl;
+    std::cout << "expression value for x1 = " << xValue << " and x2 = " << yValue<< " is: " << result << "\n";
+    std::cout << "1st order differential value for x1 = " << xValue << " and x2 = " << yValue << " is: " << result_diff << "\n";
 
     Newton newton(root, x0);
-    std::cout << "The interval found by Newton method: ";
+    std::cout << "\nNewton: " << "\n";
     newton._run();
-    std::cout << std::endl;
 
     // STEEPEST DESCENT
     Steepest_Descent steepest_descent(root, expression, 0.001, 0, 10, x0);
-    std::cout << "Steepest Descent: " << std::endl;
+    std::cout << "Steepest Descent: " << "\n";
     steepest_descent._run();
 
     // CONJUGATE GRADIENT
-    Conjugate_Gradient conjugate_gradient(root, expression, x0, 0.0001);
-    std::cout << "Conjugate Gradient: " << std::endl;
+    Conjugate_Gradient conjugate_gradient(root, expression, x0, 0.001);
+    std::cout << "Conjugate Gradient: " << "\n";
     conjugate_gradient._run();
     return 0;
 }
-
-/*
-- now i need to implement the binary tree in order to compute the differential equations.
-*/
