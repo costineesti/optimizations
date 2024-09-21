@@ -25,7 +25,6 @@ class Newton : public Differentiator {
         Node* m_function;
         std::map<std::string, double> m_x0;
         Differentiator diff;
-        std::map<std::string, double> x_new;
 }; // class Newton
 
 #endif // Newton.hpp
