@@ -158,7 +158,7 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
                         operatorStack.pop();
 
                     }
-                operatorStack.push(token);
+            operatorStack.push(token);
         }
         else if(token.type == Token::LEFT_PARAN){
             operatorStack.push(token);
@@ -176,7 +176,7 @@ std::queue<Token::TokenData> Token::ShuntingYard(const std::vector<Token::TokenD
                 operatorStack.pop();
             }
         }
-        auto last_token = token;
+        
     }
 
     // After the loop, pop all operators from the stack to the output queue
@@ -257,9 +257,6 @@ std::pair<double,double> Token::golden_section(std::queue<Token::TokenData> outp
             a = x1;
         }
     }
-    double point = (a+b)/2;
-    std::map<std::string, double> final_point;
-    final_point[variableName] = point;
     return {a,b};
 }
 
@@ -298,9 +295,6 @@ std::pair<double,double> Token::fibonacci_series(std::queue<Token::TokenData> ou
         f2 = f3;
         f3 = f1+f2;
     }
-    double point = (a+b)/2;
-    std::map<std::string, double> final_point;
-    final_point[variableName] = point;
     return {a,b};
 }
 
