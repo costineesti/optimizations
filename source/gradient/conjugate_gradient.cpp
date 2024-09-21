@@ -124,9 +124,7 @@ void Conjugate_Gradient::Solver_Fletcher_Reeves(){
         dir_k_local = d_new_local;
         k++;
     }
-    final_a = x_new_FR["x"];
-    final_b = x_new_FR["y"];
-    std::cout<< "The Conjugate Gradient Fletcher-Reeves found interval in "<< k <<" steps is a: "<<final_a<<" and b: "<<final_b<< "\n";
+    std::cout<< "The Conjugate Gradient Fletcher-Reeves found interval in "<< k <<" steps is a: "<<x_new_FR["x"]<<" and b: "<<x_new_FR["y"]<< "\n";
 }
 
 /** @brief Conjugate Gradient Solver using BETA computing by Fletcher-Reeves method */
@@ -147,7 +145,7 @@ void Conjugate_Gradient::Solver_Polak_Ribiere(){
         double scalar_denominator = (d_old_local*d_old_local.transpose()).value(); // Extract the scalar.
         auto diff = gradient-d_old_local;
         double scalar_numerator =  (gradient * diff.transpose()).value(); // Extract the scalar
-        
+
         BETA_Polak_Ribiere = scalar_numerator / scalar_denominator;
         d_new_local = -gradient + BETA_Polak_Ribiere * dir_k_local;
 
@@ -166,15 +164,13 @@ void Conjugate_Gradient::Solver_Polak_Ribiere(){
         // Compute the step as the middle of found interval.
         this->step = (final_a+final_b)/2;
         // Prepare variables for next iteration
-        x_new_PR["x"] = x_curr_PR["x"] + dir_k_local(0,0)*this->step;
-        x_new_PR["y"] = x_curr_PR["y"] + dir_k_local(0,1)*this->step;
+        x_new_PR["x"] = x_curr_PR["x"] + d_new_local(0,0)*this->step;
+        x_new_PR["y"] = x_curr_PR["y"] + d_new_local(0,1)*this->step;
         d_old_local = gradient;
         dir_k_local = d_new_local;
         k++;
     }
-    final_a = x_new_PR["x"];
-    final_b = x_new_PR["y"];
-    std::cout<< "The Conjugate Gradient Polak-Ribiere found interval in "<< k <<" steps is a: "<<final_a<<" and b: "<<final_b<< "\n";
+    std::cout<< "The Conjugate Gradient Polak-Ribiere found interval in "<< k <<" steps is a: "<<x_new_PR["x"]<<" and b: "<<x_new_PR["y"]<< "\n";
 }
 
 void Conjugate_Gradient::_run(){
